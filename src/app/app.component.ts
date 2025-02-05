@@ -11,52 +11,89 @@ import { RouterModule } from '@angular/router';
   imports: [FormsModule, CommonModule, RouterModule],
 })
 export class AppComponent {
-  title = 'ejercicio';
+  title = 'Gestor de Tareas';
 
   // Propiedades
-  producto = {
-    nombre: '',
-    cantidad: 0,
-    precio: 0,
+  tarea = {
+    descripcion: '',
+    prioridad: 'Media',
+    completada: false,
   };
-  listaProductos: { nombre: string; cantidad: number; precio: number }[] = [];
+
+  listaTareas: { descripcion: string; prioridad: string; completada: boolean }[] = [];
   modoEdicion = false;
   indiceEdicion: number | null = null;
 
+  constructor() {
+    this.cargarTareas(); // Cargar tareas almacenadas al iniciar
+  }
+
   // Métodos
-  agregarProducto() {
-    if (this.producto.nombre && this.producto.cantidad > 0 && this.producto.precio > 0) {
-      this.listaProductos.push({ ...this.producto });
+  agregarTarea() {
+    if (this.tarea.descripcion.trim()) {
+      this.listaTareas.push({ ...this.tarea });
+      this.guardarTareas(); // Guardar en localStorage
       this.limpiarFormulario();
     } else {
-      alert('Por favor, complete todos los campos correctamente.');
+      alert('Por favor, ingrese una descripción para la tarea.');
     }
   }
 
-  editarProducto(index: number) {
+  editarTarea(index: number) {
     this.modoEdicion = true;
     this.indiceEdicion = index;
-    this.producto = { ...this.listaProductos[index] };
+    this.tarea = { ...this.listaTareas[index] };
   }
 
-  actualizarProducto() {
+  actualizarTarea() {
     if (this.indiceEdicion !== null) {
-      this.listaProductos[this.indiceEdicion] = { ...this.producto };
+      this.listaTareas[this.indiceEdicion] = { ...this.tarea };
+      this.guardarTareas(); // Guardar cambios en localStorage
       this.limpiarFormulario();
       this.modoEdicion = false;
     }
   }
 
-  eliminarProducto(index: number) {
-    this.listaProductos.splice(index, 1);
+  eliminarTarea(index: number) {
+    this.listaTareas.splice(index, 1);
+    this.guardarTareas(); // Guardar cambios en localStorage
   }
 
-  calcularTotal() {
-    return this.listaProductos.reduce((total, item) => total + item.cantidad * item.precio, 0);
+  eliminarTodasTareas() {
+    if (this.listaTareas.length === 0) {
+      alert('No hay tareas agregadas.');
+      return;
+    }
+
+    const confirmacion = confirm('¿Estás seguro de que deseas eliminar todas las tareas?');
+    if (confirmacion) {
+      this.listaTareas = [];
+      localStorage.removeItem('tareas');
+    }
+  }
+
+  cambiarEstado(index: number) {
+    this.listaTareas[index].completada = !this.listaTareas[index].completada;
+    this.guardarTareas(); // Guardar cambios en localStorage
+  }
+
+  contarPendientes() {
+    return this.listaTareas.filter((tarea) => !tarea.completada).length;
   }
 
   limpiarFormulario() {
-    this.producto = { nombre: '', cantidad: 0, precio: 0 };
+    this.tarea = { descripcion: '', prioridad: 'Media', completada: false };
     this.indiceEdicion = null;
+  }
+
+  guardarTareas() {
+    localStorage.setItem('tareas', JSON.stringify(this.listaTareas));
+  }
+
+  cargarTareas() {
+    const tareasGuardadas = localStorage.getItem('tareas');
+    if (tareasGuardadas) {
+      this.listaTareas = JSON.parse(tareasGuardadas);
+    }
   }
 }
